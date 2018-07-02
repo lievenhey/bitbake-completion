@@ -1,15 +1,19 @@
-bitbake-bash-completion
+bitbake-completion
 =======================
 
-Bitbake bash completion script
-
+Bitbake bash completion script compatible with version 1.39.0,
+and with Yocto 2.5 (sumo) release.
 
 How to use it?
 ==============
 
-Just copy the "bitbake" file to /etc/bash_completion.d:
+Just copy the "bitbake_completion" file to /etc/bash_completion.d:
 
-# cp bitbake /etc/bash_completion.d/
+# cp bitbake_completion /etc/bash_completion.d/
+
+Or source file
+
+# source bitbake_completion
 
 
 How does it work?
@@ -32,10 +36,17 @@ Contributing and reporting bugs
 ===============================
 
 Please send any bug report, pull requests, patches, comments or questions 
-to Sergio Prado <sergio.prado@e-labworks.com>.
+to Sergio Prado <lukasz.gardon@gmail.com>.
 
 
 Maintainers
 ===========
 
+Lukasz Gardon <lukasz.gardon@gmail.com>
+
+
+Project Forked from
+===================
 Sergio Prado <sergio.prado@e-labworks.com>
+https://github.com/sergioprado/bitbake-bash-completion
+
