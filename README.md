@@ -17,10 +17,10 @@ $ cp bitbake_completion /etc/bash_completion.d/
 $ source bitbake_completion
 `
 
-# How does it work?
+# How does it work ?
 
-It will create 2 hidden files in the build directory on the first 
-execution:
+It will create 2 hidden files with using `$ bitbake -s` in the build directory
+on the first execution:
 
 .bblayers.recipes -> cache of available bitbake recipes
 .bblayers.conf.md5 -> bblayers.conf md5 checksum file
@@ -31,18 +31,24 @@ following situations:
 1. When updating the bblayers.conf file.
 2. When running bitbake <TAB>.
 
+# TODO list:
+- [x] bash bitbake completion latest release 1.39.0 (yocto - sumo 2.5)
+- [ ] create bash completion for other yocto tools (e.g *bitbake-layers*, *devtool*)
+- [ ] support older branches
+- [ ] support for zsh completion
 
-# Contributing and reporting bugs
+## Contributing and reporting bugs
 
 Please send any bug report, pull requests, patches, comments or questions 
 to Łukasz Gardoń <lukasz.gardon@gmail.com>.
 
 
-## Maintainers
-## Łukasz Gardoń <lukasz.gardon@gmail.com>
+## Maintainer
+Łukasz Gardoń <lukasz.gardon@gmail.com>
 
 
 ###### Project Forked from
-###### Sergio Prado <sergio.prado@e-labworks.com>
-###### https://github.com/sergioprado/bitbake-bash-completion
+Sergio Prado <sergio.prado@e-labworks.com>
+
+https://github.com/sergioprado/bitbake-bash-completion
 
