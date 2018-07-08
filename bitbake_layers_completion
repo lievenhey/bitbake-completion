@@ -1,0 +1,141 @@
+#!bash
+#
+# Bash completion support for bitbake-layers tool,
+# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+#
+# Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
+#
+# Distributed under the MIT License (MIT)
+#
+
+_bitbake_layers()
+{
+    local cur prev opts_short opts_long colors
+
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts_short="-d -q -F -h"
+
+    opts_long="--debug --quiet --force --color --help"
+
+    subcommands="layerindex-fetch layerindex-show-depends add-layer \
+	         remove-layer flatten show-layers show-overlayed \
+		 show-recipes show-appends show-cross-depends \
+		 create-layer"
+
+    colors="auto always never"
+
+    case "$prev" in
+        "-c"|"--color")
+            COMPREPLY=( $(compgen -W "${colors}" -- ${cur}) )
+            return 0
+        ;;
+        "show-layers"|"show-appends"|"add-layer"|"remove-layer"|"flatten")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+        "show-overlayed")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --filenames --same-version" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -f -s" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+        "show-recipes")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --filenames --multiple --inherits" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -f -m -i" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+        "show-cross-depends")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --filenames --ignore" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -f -i" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+        "layerindex-fetch")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --show-only --branch --ignore" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -n -b -i" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+        "layerindex-show-depends")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --branch" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -b" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+        "create-layer")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --priority --example-recipe-name --example-recipe-version" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -p -e -v" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	;;
+    esac
+
+    case "$cur" in
+        "--"*)
+            COMPREPLY=( $(compgen -W "${opts_long}" -- ${cur}) )
+            return 0
+        ;;
+        "-"*)
+            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}) )
+            return 0
+        ;;
+    esac
+
+    if [[ ${prev} == "bitbake-layers" ]]; then
+        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
+        return 0
+    elif [[ ! ${subcommands} =~ [[:space:]]${cur}[[:space:]] ]]; then
+        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _bitbake_layers bitbake-layers

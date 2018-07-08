@@ -1,0 +1,35 @@
+#!bash
+#
+# Bash completion support for bitbake-selftest tool,
+# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+#
+# Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
+#
+# Distributed under the MIT License (MIT)
+#
+
+_bitbake_selftest()
+{
+    local cur prev opts_short opts_long
+
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts_short="-h -v -q -f -c"
+
+    opts_long="--help --verbose --quiet --locals --failfast --catch"
+
+    case "$cur" in
+        "--"*)
+            COMPREPLY=( $(compgen -W "${opts_long}" -- ${cur}) )
+            return 0
+        ;;
+        "-"*)
+            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}) )
+            return 0
+        ;;
+    esac
+}
+complete -F _bitbake_selftest bitbake-selftest

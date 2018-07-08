@@ -1,0 +1,77 @@
+#!bash
+#
+# Bash completion support for bitbake-prserv tool - version 1.0.0,
+# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+#
+# Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
+#
+# Distributed under the MIT License (MIT)
+#
+
+_bitbake_prserv()
+{
+    local cur prev opts_short opts_long subcommands file_default log_default log_levels
+
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts_short="-h -f -l"
+
+    opts_long="--version --help --file= --log= --loglevel= --start \
+	       --stop --host= --port="
+
+    subcommands="layerindex-fetch layerindex-show-depends add-layer \
+	         remove-layer flatten show-layers show-overlayed \
+		 show-recipes show-appends show-cross-depends \
+		 create-layer"
+
+    file_default="prserv.sqlite3"
+    log_default="prserv.log"
+    log_levels="CRITICAL ERROR WARNING INFO DEBUG"
+
+    if [[ "$prev" == "=" ]]; then
+        prev="${COMP_WORDS[COMP_CWORD -2]}"
+    elif [[ "$cur" == "=" ]]; then
+        cur=""
+    fi
+
+    case "$prev" in
+        "-f"|"--file")
+            COMPREPLY=( $(compgen -W "${file_default}" -- ${cur}) )
+            return 0
+        ;;
+        "-l"|"--log")
+            COMPREPLY=( $(compgen -W "${log_default}" -- ${cur}) )
+            return 0
+        ;;
+        "--loglevel")
+            COMPREPLY=( $(compgen -W "${log_levels}" -- ${cur}) )
+            return 0
+        ;;
+    esac
+
+    case "$cur" in
+        "--"*)
+            COMPREPLY=( $(compgen -W "${opts_long}" -- ${cur}) )
+            if [[ ${#COMPREPLY[@]} == 1 && ${COMPREPLY[0]} == "--"*"=" ]] ; then
+                compopt -o nospace
+            fi
+            return 0
+        ;;
+        "-"*)
+            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}) )
+            return 0
+        ;;
+    esac
+
+    if [[ ${prev} == "bitbake-layers" ]]; then
+        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
+        return 0
+    elif [[ ! ${subcommands} =~ [[:space:]]${cur}[[:space:]] ]]; then
+        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F _bitbake_prserv bitbake-prserv

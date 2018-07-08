@@ -1,0 +1,64 @@
+#!bash
+#
+# Bash completion support for bitbake-whatchanged compatible with
+# Bitbake Build Tool Core version 1.39.0, Yocto 2.5 (sumo) release.
+#
+# Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
+#
+# Distributed under the MIT License (MIT)
+#
+
+_bitbake_whatchanged()
+{
+    local cur prev opts_short opts_long recipes bbfile_entry
+    local bblayers_conf bblayers_md5 bblayers_bbfile bblayers_recipes
+
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts_short="-h -v"
+
+    opts_long="--help --verbose"
+
+    case "$cur" in
+        "--"*)
+            COMPREPLY=( $(compgen -W "${opts_long}" -- ${cur}) )
+            return 0
+        ;;
+        "-"*)
+            COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}) )
+            return 0
+        ;;
+    esac
+
+    bblayers_conf="conf/bblayers.conf"
+    bblayers_md5=".bblayers.conf.md5"
+    bblayers_bbfile=".bblayers.bbfile"
+    bblayers_recipes=".bblayers.recipes"
+
+    _parse_recipes () {
+        bitbake -s | sed '0,/^=.*/d' > $bblayers_recipes
+    }
+
+    if [ ! -e $bblayers_conf ]; then
+        return 0
+    fi
+
+    if [ "$prev" = "bitbake" -a "$cur" = "" ]; then
+	    _parse_recipes
+    fi
+
+    md5sum --quiet --status -c $bblayers_md5 2>/dev/null
+    if [ $? != 0 -o ! -e $bblayers_recipes ]; then
+         md5sum $bblayers_conf > $bblayers_md5
+         _parse_recipes
+    fi
+
+    recipes=$(cat $bblayers_recipes)
+
+    COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+    return 0
+}
+complete -F _bitbake_whatchanged bitbake-whatchanged
