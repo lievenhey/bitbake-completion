@@ -11,8 +11,8 @@
 
 _bitbake()
 {
-    local cur prev opts_short opts_long tasks recipes bbfile_entry recipe ui
-    local bblayers_conf bblayers_md5 bblayers_bbfile bblayers_recipes recipe_path
+    local cur prev opts_short opts_long tasks recipes ui
+    local bb_layers_conf bb_layers_md5 bb_layers_recipes
 
     COMPREPLY=()
 
@@ -87,30 +87,29 @@ _bitbake()
 
     esac
 
-    bblayers_conf="conf/bblayers.conf"
-    bblayers_md5=".bblayers.conf.md5"
-    bblayers_bbfile=".bblayers.bbfile"
-    bblayers_recipes=".bblayers.recipes"
+    bb_layers_conf="conf/bblayers.conf"
+    bb_layers_md5=".bb_layers_conf.md5"
+    bb_recipes=".bb_recipes"
 
     _parse_recipes () {
-        bitbake -s | sed '0,/^=.*/d' > $bblayers_recipes
+        bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
     }
 
-    if [ ! -e $bblayers_conf ]; then
+    if [ ! -e $bb_layers_conf ]; then
         return 0
     fi
 
     if [ "$prev" = "bitbake" -a "$cur" = "" ]; then
-	    _parse_recipes
+        _parse_recipes
     fi
 
-    md5sum --quiet --status -c $bblayers_md5 2>/dev/null
-    if [ $? != 0 -o ! -e $bblayers_recipes ]; then
-         md5sum $bblayers_conf > $bblayers_md5
+    md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
+    if [ $? != 0 -o ! -e $bb_recipes ]; then
+         md5sum $bb_layers_conf > $bb_layers_md5
          _parse_recipes
     fi
 
-    recipes=$(cat $bblayers_recipes)
+    recipes=$(cat $bb_recipes)
 
     COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
     return 0
