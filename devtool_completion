@@ -92,6 +92,7 @@ _devtool()
     bb_layers_md5=".bb_layers_conf.md5"
     bb_recipes_devtool=".bb_recipes_devtool"
     bb_recipes=".bb_recipes"
+    bb_recipes_export=".bb_recipes_export"
 
     _parse_recipes_devtool () {
 		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
@@ -110,6 +111,15 @@ _devtool()
 		    bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
         fi
 		recipes=$(cat $bb_recipes)
+    }
+
+    _parse_recipes_export () {
+		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
+        if [[ $? != 0 ]] || [[ ! -e ${bb_recipes_export} ]]; then
+            md5sum $bb_layers_conf > $bb_layers_md5
+			devtool status | grep -v NOTE: | awk '{print $1}' | sed 's/://' > $bb_recipes_export
+        fi
+		recipes_export=$(cat $bb_recipes_export)
     }
 
     case "$prev" in
@@ -425,7 +435,14 @@ _devtool()
                     COMPREPLY=( $(compgen -W "${opts_short_extract}" -- ${cur}) )
                     return 0
                 ;;
+				"")
+					_parse_recipes
+				;;
             esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+            fi
         ;;
         "sync")
             case "$cur" in
@@ -437,12 +454,35 @@ _devtool()
                     COMPREPLY=( $(compgen -W "${opts_short_sync}" -- ${cur}) )
                     return 0
                 ;;
+				"")
+					_parse_recipes
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "export")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_export}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_export}" -- ${cur}) )
+                    return 0
+                ;;
+                "")
+                    COMPREPLY=( $(compgen -W "${opts_long_export}" -- ${cur}) )
+                    return 0
+                ;;
             esac
         ;;
     esac
 
 	# this is needed for support completion using short and long flags for some subcommands
-	if [[ "${COMP_WORDS[COMP_CWORD -2]}" =~ modify|upgrade|latest-version|build|rename|edit-recipe|find-recipe|configure-help|update-recipe|reset|finish|deploy-target|undeploy-target|build-image|create-workspace|import ]]; then
+	if [[ "${COMP_WORDS[COMP_CWORD -2]}" =~ modify|upgrade|latest-version|build|rename|edit-recipe|find-recipe|configure-help|update-recipe|reset|finish|deploy-target|undeploy-target|build-image|create-workspace|import|extract|sync ]]; then
 		prev_subcommand="${COMP_WORDS[COMP_CWORD -2]}"
 	else
 		prev_subcommand=""
@@ -629,7 +669,41 @@ _devtool()
                 ;;
 				esac
 		;;
+		"extract")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_extract}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_extract}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"sync")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_sync}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_sync}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
 	esac
+
+	if [[ "${COMP_WORDS[0]}" == "devtool" ]] && [[ "${COMP_WORDS[1]}" == "export" ]]; then
+		if [[ "${COMP_WORDS[2]}" =~ --exclude|-e|--import|-i ]]; then
+			_parse_recipes_export
+			if [[ -e $bb_recipes_export ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_export}" -- ${cur}) )
+                return 0
+            fi
+		fi
+	fi
 
     case "$cur" in
         "--"*)
