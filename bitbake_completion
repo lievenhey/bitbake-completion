@@ -12,7 +12,7 @@
 _bitbake()
 {
     local cur prev opts_short opts_long tasks recipes ui
-    local bb_layers_conf bb_layers_md5 bb_layers_recipes
+    local bb_layers_conf bb_layers_md5 bb_recipes
 
     COMPREPLY=()
 

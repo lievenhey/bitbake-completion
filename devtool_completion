@@ -10,8 +10,14 @@
 
 _devtool()
 {
-    local cur prev opts_short opts_long subcommands bbfile_entry recipe ui
-    local bblayers_conf bblayers_md5 bblayers_recipes recipe_path
+    local cur prev opts_short opts_long colors conf_files subcommands bb_layers_conf bb_layers_md5
+    local bb_recipes bb_recipes_devtool bb_recipes_export prepare_recipes_from_workspace
+	local prev_subcommand opts_short_add opts_long_add opts_short_modify opts_long_modify
+	local opts_short_upgrade opts_long_upgrade opts_short_rename opts_long_rename opts_short_edit_recipe
+	local opts_long_edit_recipe opts_short_configure_help opts_long_configure_help opts_short_update_recipe
+	local opts_long_update_recipe opts_short_reset opts_long_reset opts_short_finish opts_long_finish
+	local opts_short_deploy_target opts_long_deploy_target opts_short_undeploy_target opts_long_undeploy_target
+	local opts_short_extract opts_long_extract opts_short_sync opts_long_sync opts_short_export opts_long_export
 
     COMPREPLY=()
 
@@ -90,9 +96,18 @@ _devtool()
 
     bb_layers_conf="conf/bblayers.conf"
     bb_layers_md5=".bb_layers_conf.md5"
-    bb_recipes_devtool=".bb_recipes_devtool"
     bb_recipes=".bb_recipes"
+    bb_recipes_devtool=".bb_recipes_devtool"
     bb_recipes_export=".bb_recipes_export"
+
+    _parse_recipes () {
+		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
+        if [[ $? != 0 ]] || [[ ! -e ${bb_recipes} ]]; then
+            md5sum $bb_layers_conf > $bb_layers_md5
+		    bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
+        fi
+		recipes=$(cat $bb_recipes)
+    }
 
     _parse_recipes_devtool () {
 		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
@@ -102,15 +117,6 @@ _devtool()
             bitbake -s | grep ${prepare_recipes_from_workspace} | awk '{print $1}' > $bb_recipes_devtool
 		fi
         recipes_devtool=$(cat $bb_recipes_devtool)
-    }
-
-    _parse_recipes () {
-		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
-        if [[ $? != 0 ]] || [[ ! -e ${bb_recipes} ]]; then
-            md5sum $bb_layers_conf > $bb_layers_md5
-		    bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
-        fi
-		recipes=$(cat $bb_recipes)
     }
 
     _parse_recipes_export () {
@@ -718,30 +724,6 @@ _devtool()
             return 0
         ;;
     esac
-
-#    if [ ! -e $bblayers_conf ]; then
-#        return 0
-#    fi
-
-    # fully possible extension (ALL RECIPES FROM bblayers.conf file)
-    # modify latest-version build edit-recipe find-recipe update-recipe
-
-    # only target recipe name (without native or nativesdk extension)
-    # rename finish 
-
-#    md5sum --quiet --status -c $bblayers_md5 2>/dev/null
-#    if [ $? != 0 -o ! -e $bblayers_recipes_devtool ]; then
-#         md5sum $bblayers_conf > $bblayers_md5
-#         _parse_recipes_devtool
-#    fi
-
-
-    #echo "prev $prev"
-    #echo "cur $cur"
-    #if [[ "$prev" = "devtool" ]] && [[ "$cur" = "modify" ]]; then
-#	    echo "test"
-#	    _parse_recipes_devtool
-#    fi
 
     if [[ ${prev} == "devtool" ]]; then
         COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )

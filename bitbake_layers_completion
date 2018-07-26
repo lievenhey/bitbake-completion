@@ -10,7 +10,7 @@
 
 _bitbake_layers()
 {
-    local cur prev opts_short opts_long colors
+    local cur prev opts_short opts_long subcommands colors
 
     COMPREPLY=()
 
@@ -22,11 +22,24 @@ _bitbake_layers()
     opts_long="--debug --quiet --force --color --help"
 
     subcommands="layerindex-fetch layerindex-show-depends add-layer \
-	         remove-layer flatten show-layers show-overlayed \
-		 show-recipes show-appends show-cross-depends \
-		 create-layer"
+	             remove-layer flatten show-layers show-overlayed \
+				 show-recipes show-appends show-cross-depends \
+				 create-layer"
 
     colors="auto always never"
+
+	if [[ "${COMP_WORDS[0]}" == "bitbake-layers" ]] && [[ "${COMP_WORDS[1]}" == "add-layer" ]]; then
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --priority --example-recipe-name --example-recipe-version" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+	fi
 
     case "$prev" in
         "-c"|"--color")
@@ -44,7 +57,7 @@ _bitbake_layers()
                     return 0
                 ;;
             esac
-	;;
+		;;
         "show-overlayed")
             case "$cur" in
                 "--"*)
@@ -56,7 +69,7 @@ _bitbake_layers()
                     return 0
                 ;;
             esac
-	;;
+		;;
         "show-recipes")
             case "$cur" in
                 "--"*)
@@ -68,7 +81,7 @@ _bitbake_layers()
                     return 0
                 ;;
             esac
-	;;
+		;;
         "show-cross-depends")
             case "$cur" in
                 "--"*)
@@ -80,7 +93,7 @@ _bitbake_layers()
                     return 0
                 ;;
             esac
-	;;
+		;;
         "layerindex-fetch")
             case "$cur" in
                 "--"*)
@@ -92,7 +105,7 @@ _bitbake_layers()
                     return 0
                 ;;
             esac
-	;;
+		;;
         "layerindex-show-depends")
             case "$cur" in
                 "--"*)
@@ -104,7 +117,7 @@ _bitbake_layers()
                     return 0
                 ;;
             esac
-	;;
+		;;
         "create-layer")
             case "$cur" in
                 "--"*)
