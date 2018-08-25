@@ -1,7 +1,4 @@
-#!bash
-#
-# Bash completion support for Bitbake Build Tool Core version 1.39.0,
-# and compatible with Yocto 2.5 (sumo) release.
+# Bash completion support for bitbake 1.39.1 release.
 #
 # Copyright (C) 2014 Sergio Prado <sergio.prado@e-labworks.com>
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
@@ -52,26 +49,21 @@ _bitbake()
     conf_files=$(find . -maxdepth 1 -name "*.conf" -type f -printf '%P\n')
 
     case "$prev" in
-
         "-c"|"--cmd"|"-C"|"--clear-stamp"|"--ignore-deps"|"--runall"|"--runonly")
             COMPREPLY=( $(compgen -W "${tasks}" -- ${cur}) )
             return 0
         ;;
-
         "-r"|"--read"|"-R"|"--postread")
             COMPREPLY=( $(compgen -W "${conf_files}" -- ${cur}) )
             return 0
         ;;
-
         "-u"|"--ui")
             COMPREPLY=( $(compgen -W "${ui}" -- ${cur}) )
             return 0
         ;;
-
     esac
 
     case "$cur" in
-
         "--"*)
             COMPREPLY=( $(compgen -W "${opts_long}" -- ${cur}) )
             if [[ ${#COMPREPLY[@]} == 1 && ${COMPREPLY[0]} == "--"*"=" ]] ; then
@@ -79,12 +71,10 @@ _bitbake()
             fi
             return 0
         ;;
-
         "-"*)
             COMPREPLY=( $(compgen -W "${opts_short}" -- ${cur}) )
             return 0
         ;;
-
     esac
 
     bb_layers_conf="conf/bblayers.conf"

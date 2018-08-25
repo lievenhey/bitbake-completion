@@ -1,7 +1,5 @@
-#!bash
-#
 # Bash completion support for bitbake-diffsigs tool,
-# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+# compatible with Bitbake 1.39.1.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #
@@ -50,7 +48,7 @@ _bitbake_diffsigs()
     bb_recipes=".bb_recipes"
 
     _parse_recipes () {
-        bitbake -s | sed '0,/^=.*/d' > $bb_recipes
+        bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
     }
 
     if [ ! -e $bb_layers_conf ]; then
@@ -63,8 +61,8 @@ _bitbake_diffsigs()
 
     md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
     if [ $? != 0 -o ! -e $bb_recipes ]; then
-         md5sum $bb_layers_conf > $bb_layers_md5
-         _parse_recipes
+        md5sum $bb_layers_conf > $bb_layers_md5
+        _parse_recipes
     fi
 
     recipes=$(cat $bb_recipes)
@@ -81,7 +79,7 @@ _bitbake_diffsigs()
 
     if [[ ${COMP_WORDS[COMP_CWORD -2]} == "-t" ]] || [[ ${COMP_WORDS[COMP_CWORD -2]} == "--task" ]]; then 
         COMPREPLY=( $(compgen -W "${tasks}" -- ${cur}) )
-	return 0
+	    return 0
     fi
 }
 complete -F _bitbake_diffsigs bitbake-diffsigs

@@ -1,7 +1,5 @@
-#!bash
-#
 # Bash completion support for bitbake-layers tool,
-# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+# compatible with Bitbake 1.39.1.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #
@@ -11,6 +9,12 @@
 _bitbake_layers()
 {
     local cur prev opts_short opts_long subcommands colors
+    local opts_long_add_layer opts_short_add_layer opts_long_show_overlayed
+    local opts_short_show_overlayed opts_long_show_recipes opts_short_show_recipes
+    local opts_long_show_cross_depends opts_short_show_cross_depends
+    local opts_long_show_layerindex_fetch opts_short_show_layerindex_fetch
+    local opts_long_show_layerindex_show_depends opts_short_show_layerindex_show_depends
+    local opts_long_show_create_layer opts_short_show_create_layer bb_class_files classes
 
     COMPREPLY=()
 
@@ -23,113 +27,142 @@ _bitbake_layers()
 
     subcommands="layerindex-fetch layerindex-show-depends add-layer \
 	             remove-layer flatten show-layers show-overlayed \
-				 show-recipes show-appends show-cross-depends \
-				 create-layer"
+		         show-recipes show-appends show-cross-depends \
+		         create-layer"
 
-    colors="auto always never"
+    colors="auto always never" 
 
-	if [[ "${COMP_WORDS[0]}" == "bitbake-layers" ]] && [[ "${COMP_WORDS[1]}" == "add-layer" ]]; then
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --priority --example-recipe-name --example-recipe-version" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-	fi
+    opts_long_show_overlayed="--help --filenames --same-version"
+    opts_short_show_overlayed="-h -f -s"
+
+    opts_long_show_recipes="--help --filenames --multiple --inherits"
+    opts_short_show_recipes="-h -f -m -i"
+
+    opts_long_show_layerindex_fetch="--help --show-only --branch --ignore"
+    opts_short_show_layerindex_fetch="-h -n -b -i"
+
+    opts_long_add_layer="--help --priority --example-recipe-name --example-recipe-version"
+    opts_short_add_layer="-h"
+
+    opts_long_show_cross_depends="--help --filenames --ignore"
+    opts_short_show_cross_depends="-h -f -i"
+
+    opts_long_show_layerindex_show_depends="--help --branch"
+    opts_short_show_layerindex_show_depends="-h -b"
+
+    opts_long_show_create_layer="--help --priority --example-recipe-name --example-recipe-version"
+    opts_short_show_create_layer="-h -p -e -v"
+
+    bb_class_files=".bb_class_files"
+
+    _get_classes() {
+        find $BBPATH/../meta*/classes/ -name *.bbclass -exec basename {} \; | sed 's/.bbclass//' > $bb_class_files
+    }
+
+    if [[ "${COMP_WORDS[@]}" =~ show-recipes ]] ; then
+        if [[ "$prev" == "--inherits" ]] || [[ "$prev" == "-i" ]]; then
+            _get_classes
+            classes=$(cat $bb_class_files)
+            COMPREPLY=( $(compgen -W "${classes}" -- ${cur}) )
+            return 0
+        fi
+    fi
+
+    if [[ "${COMP_WORDS[1]}" =~ show-layers|show-appends|remove-layer|flatten ]]; then
+        case "$cur" in
+            "--"*)
+                COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                return 0
+            ;;
+        esac
+    elif [[ "${COMP_WORDS[1]}" == "add-layer" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_add_layer}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_add_layer}" -- ${cur}) )
+                return 0
+            ;;
+        esac
+    elif [[ "${COMP_WORDS[1]}" == "show-overlayed" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_show_overlayed}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_show_overlayed}" -- ${cur}) )
+                return 0
+            ;;
+        esac
+    elif [[ "${COMP_WORDS[1]}" == "show-recipes" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_show_recipes}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_show_recipes}" -- ${cur}) )
+                return 0
+            ;;
+        esac
+    elif [[ "${COMP_WORDS[1]}" == "show-cross-depends" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_show_cross_depends}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_show_cross_depends}" -- ${cur}) )
+                return 0
+            ;;
+        esac    
+    elif [[ "${COMP_WORDS[1]}" == "layerindex-fetch" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_show_layerindex_fetch}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_show_layerindex_fetch}" -- ${cur}) )
+                return 0
+            ;;
+        esac    
+    elif [[ "${COMP_WORDS[1]}" == "layerindex-show-depends" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_show_layerindex_show_depends}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_show_layerindex_show_depends}" -- ${cur}) )
+                return 0
+            ;;
+        esac
+    elif [[ "${COMP_WORDS[1]}" == "create-layer" ]]; then
+        case "$cur" in
+            "--"*|"")
+                COMPREPLY=( $(compgen -W "${opts_long_show_create_layer}" -- ${cur}) )
+                return 0
+            ;;
+            "-"*)
+                COMPREPLY=( $(compgen -W "${opts_short_show_create_layer}" -- ${cur}) )
+                return 0
+            ;;
+        esac                          
+    fi
 
     case "$prev" in
         "-c"|"--color")
             COMPREPLY=( $(compgen -W "${colors}" -- ${cur}) )
             return 0
         ;;
-        "show-layers"|"show-appends"|"add-layer"|"remove-layer"|"flatten")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-		;;
-        "show-overlayed")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --filenames --same-version" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h -f -s" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-		;;
-        "show-recipes")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --filenames --multiple --inherits" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h -f -m -i" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-		;;
-        "show-cross-depends")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --filenames --ignore" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h -f -i" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-		;;
-        "layerindex-fetch")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --show-only --branch --ignore" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h -n -b -i" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-		;;
-        "layerindex-show-depends")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --branch" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h -b" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-		;;
-        "create-layer")
-            case "$cur" in
-                "--"*)
-                    COMPREPLY=( $(compgen -W "--help --priority --example-recipe-name --example-recipe-version" -- ${cur}) )
-                    return 0
-                ;;
-                "-"*)
-                    COMPREPLY=( $(compgen -W "-h -p -e -v" -- ${cur}) )
-                    return 0
-                ;;
-            esac
-	;;
     esac
 
     case "$cur" in

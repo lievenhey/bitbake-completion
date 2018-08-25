@@ -1,7 +1,5 @@
-#!bash
-#
-# Bash completion support for bitbake-prserv tool - version 1.0.0,
-# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+# Bash completion support for bitbake-prserv tool,
+# compatible with Bitbake 1.39.1.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #
@@ -20,12 +18,12 @@ _bitbake_prserv()
     opts_short="-h -f -l"
 
     opts_long="--version --help --file= --log= --loglevel= --start \
-	       --stop --host= --port="
+	           --stop --host= --port="
 
     subcommands="layerindex-fetch layerindex-show-depends add-layer \
-	         remove-layer flatten show-layers show-overlayed \
-		 show-recipes show-appends show-cross-depends \
-		 create-layer"
+	             remove-layer flatten show-layers show-overlayed \
+		         show-recipes show-appends show-cross-depends \
+		         create-layer"
 
     file_default="prserv.sqlite3"
     log_default="prserv.log"
@@ -53,7 +51,7 @@ _bitbake_prserv()
     esac
 
     case "$cur" in
-        "--"*)
+        "--"*|"")
             COMPREPLY=( $(compgen -W "${opts_long}" -- ${cur}) )
             if [[ ${#COMPREPLY[@]} == 1 && ${COMPREPLY[0]} == "--"*"=" ]] ; then
                 compopt -o nospace

@@ -1,7 +1,5 @@
-#!bash
-#
 # Bash completion support for bitbake-selftest tool,
-# compatible with Bitbake 1.39.0 and Yocto 2.5 (sumo) release.
+# compatible with Bitbake version 1.39.1.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #
