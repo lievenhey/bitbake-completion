@@ -1,3 +1,5 @@
+#!bash
+#
 # Bash completion support for bitbake-whatchanged tool,
 # compatible with Bitbake version 1.39.1.
 #

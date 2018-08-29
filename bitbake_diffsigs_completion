@@ -1,3 +1,4 @@
+#!bash
 # Bash completion support for bitbake-diffsigs tool,
 # compatible with Bitbake 1.39.1.
 #
