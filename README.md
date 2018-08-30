@@ -17,6 +17,8 @@ $ cp bitbake_completion /etc/bash_completion.d/
 $ source bitbake_completion
 `
 
+![Gif](.bitbake_completion.gif)
+
 # Available completion files:
 - bitbake,
 - bitbake-diffsigs,
