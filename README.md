@@ -43,7 +43,7 @@ following situations:
 
 # TODO list:
 - [x] bash bitbake completion latest release 1.39.0 (yocto - sumo 2.5)
-- [ ] create bash completion for other yocto tools (e.g *bitbake-layers*, *bitbake-diffsigs*)
+- [x] create bash completion for other yocto tools (e.g *bitbake-layers*, *bitbake-diffsigs*)
 - [ ] support older branches
 - [ ] support for zsh completion
 
