@@ -25,7 +25,8 @@ $ source bitbake_completion
 - bitbake-dumpsig,
 - bitbake-layers,
 - bitbake-prserv,
-- bitbake-selftest.
+- bitbake-selftest,
+- devtool.
 
 # How does it work ?
 

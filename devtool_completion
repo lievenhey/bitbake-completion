@@ -1,0 +1,728 @@
+#!bash
+# Bash completion support for devtool
+#
+# Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
+#
+# Distributed under the MIT License (MIT)
+#
+
+_devtool()
+{
+    local cur prev opts_short opts_long subcommands bbfile_entry recipe ui
+    local bblayers_conf bblayers_md5 bblayers_recipes recipe_path
+
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD -1]}"
+
+    opts_short_global="-d -q -c -h"
+
+    opts_long_global="--debug --quiet --color --help --basepath --bbpath"
+
+    subcommands=" add modify upgrade \
+	         status search latest-version \
+                 build rename edit-recipe find-recipe configure-help update-recipe reset finish \
+	         deploy-target undeploy-target build-image \
+	         create-workspace import extract sync export "
+
+    colors="auto always never"
+
+    opts_short_add="-h -s -f -V -g -S -a -B -b -p"
+    opts_long_add="--help --same-dir --no-same-dir --fetch --fetch-dev --version --no-git --srcrev \
+	           --autorev --srcbranch --binary --also-native --src-subdir --mirrors --provides"
+
+    opts_short_modify="-h -w -x -n -s -b -O"
+    opts_long_modify="--help --wildcard --extract --no-extract --same-dir --no-same-dir --branch \
+	              --no-overrides --keep-temp"
+
+    opts_short_upgrade="-h -V -S -B -b -0 -s"
+    opts_long_upgrade="--help --version --srcrev --src-branch --branch --no-patch --no-overrides \
+	               --same-dir --no-same-dir --keep-temp"
+
+    opts_short_rename="-h -V -s"
+    opts_long_rename="--help --version --no-srctree"
+
+    # 'edit-recipe' and 'find-recipe' use the same flags
+    opts_short_edit_recipe="-h -a"
+    opts_long_edit_recipe="--help --any-recipe"
+
+    opts_short_configure_help="-h -p -n"
+    opts_long_configure_help="--help --no-pager --no-header --arg"
+
+    # update MODE -m
+    opts_short_update_recipe="-h -m -a -w -n -O -N"
+    opts_long_update_recipe="--help --mode --initial-rev --append --wildcard-version --no-remove \
+	                     --no-overrides --dry-run --force-patch-refresh"
+
+    opts_short_reset="-h -a -n"
+    opts_long_reset="--help --all --no-clean"
+
+    opts_short_finish="-h -m -f -O -N"
+    opts_long_finish="--help --mode --initial-rev --force --no-overrides --dry-run --force-patch-refresh"
+
+    opts_short_deploy_target="-h -c -s -n -p -P -S"
+    opts_long_deploy_target="--help --no-host-check --show-status --dry-run --no-preserve --no-check-space \
+	                     --port --strip --no-strip"
+
+    opts_short_undeploy_target="-h -c -s -a -n -P"
+    opts_long_undeploy_target="--help --no-host-check --show-status --all --dry-run --port"
+
+    opts_short_extract="-h -b -O"
+    opts_long_extract="--help --branch --no-overrides --keep-temp"
+
+    opts_short_sync="-h -b"
+    opts_long_sync="--help --branch --keep-temp"
+
+    opts_short_export="-h -f -o -i -e"
+    opts_long_export="--help --file --overwrite --include --exclude"
+
+
+    if [[ "$prev" == "=" ]]; then
+        prev="${COMP_WORDS[COMP_CWORD -2]}"
+    elif [[ "$cur" == "=" ]]; then
+        cur=""
+    fi
+
+    conf_files=$(find . -maxdepth 1 -name "*.conf" -type f -printf '%P\n')
+
+    bb_layers_conf="conf/bblayers.conf"
+    bb_layers_md5=".bb_layers_conf.md5"
+    bb_recipes_devtool=".bb_recipes_devtool"
+    bb_recipes=".bb_recipes"
+    bb_recipes_export=".bb_recipes_export"
+
+    _parse_recipes_devtool () {
+		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
+		if [[ $? != 0 ]] || [[ ! -e ${bb_recipes_devtool} ]]; then
+            md5sum $bb_layers_conf > $bb_layers_md5
+            prepare_recipes_from_workspace=$(devtool status | grep -v NOTE: | awk '{print $1}' | sed -e 's/://' -e 's/^/-e /')
+            bitbake -s | grep ${prepare_recipes_from_workspace} | awk '{print $1}' > $bb_recipes_devtool
+		fi
+        recipes_devtool=$(cat $bb_recipes_devtool)
+    }
+
+    _parse_recipes () {
+		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
+        if [[ $? != 0 ]] || [[ ! -e ${bb_recipes} ]]; then
+            md5sum $bb_layers_conf > $bb_layers_md5
+		    bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
+        fi
+		recipes=$(cat $bb_recipes)
+    }
+
+    _parse_recipes_export () {
+		md5sum --quiet --status -c $bb_layers_md5 2>/dev/null
+        if [[ $? != 0 ]] || [[ ! -e ${bb_recipes_export} ]]; then
+            md5sum $bb_layers_conf > $bb_layers_md5
+			devtool status | grep -v NOTE: | awk '{print $1}' | sed 's/://' > $bb_recipes_export
+        fi
+		recipes_export=$(cat $bb_recipes_export)
+    }
+
+    case "$prev" in
+        "-c"|"--color")
+            if [[ ! ${COMP_WORDS[COMP_CWORD -2]} == "deploy-target" ]] && [[ ! ${COMP_WORDS[COMP_CWORD -2]} == "undeploy-target" ]]; then
+                COMPREPLY=( $(compgen -W "${colors}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "add")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_add}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_add}" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+        ;;
+        "modify")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_modify}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_modify}" -- ${cur}) )
+                    return 0
+                ;;
+   		      	"")
+				    _parse_recipes_devtool
+				;;
+            	esac
+	    	if [[ -e $bb_recipes_devtool ]]; then
+	        	COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "upgrade")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_upgrade}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_upgrade}" -- ${cur}) )
+                    return 0
+                ;;
+        	 	"")
+		    		_parse_recipes
+				;;
+            esac
+	    	if [[ -e $bb_recipes ]]; then
+	        	COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+	    	fi
+        ;;
+        "status"|"search")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+        ;;
+        "latest-version")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "build")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --disable-parallel-make" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -s" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "rename")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_rename}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_rename}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "edit-recipe"|"find-recipe")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_edit_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_edit_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "configure-help")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_configure_help}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_configure_help}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "update-recipe")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_update_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_update_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "reset")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_reset}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_reset}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "finish")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_finish}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_finish}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "deploy-target")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_deploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_deploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "undeploy-target")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_undeploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_undeploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes_devtool
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_devtool}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "build-image")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --add-packages" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -p" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+				recipes_images=$(grep -r "image" $bb_recipes)
+                COMPREPLY=( $(compgen -W "${recipes_images}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "create-workspace")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --create-only" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+        ;;
+        "import")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --overwrite" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -o" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+        ;;
+        "extract")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_extract}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_extract}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "sync")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_sync}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_sync}" -- ${cur}) )
+                    return 0
+                ;;
+				"")
+					_parse_recipes
+				;;
+            esac
+			if [[ -e $bb_recipes ]]; then
+                COMPREPLY=( $(compgen -W "${recipes}" -- ${cur}) )
+                return 0
+            fi
+        ;;
+        "export")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_export}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_export}" -- ${cur}) )
+                    return 0
+                ;;
+                "")
+                    COMPREPLY=( $(compgen -W "${opts_long_export}" -- ${cur}) )
+                    return 0
+                ;;
+            esac
+        ;;
+    esac
+
+	# this is needed for support completion using short and long flags for some subcommands
+	if [[ "${COMP_WORDS[COMP_CWORD -2]}" =~ modify|upgrade|latest-version|build|rename|edit-recipe|find-recipe|configure-help|update-recipe|reset|finish|deploy-target|undeploy-target|build-image|create-workspace|import|extract|sync ]]; then
+		prev_subcommand="${COMP_WORDS[COMP_CWORD -2]}"
+	else
+		prev_subcommand=""
+	fi
+
+    case "$prev_subcommand" in
+		"modify")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_modify}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_modify}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"upgrade")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_upgrade}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_upgrade}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"latest-version")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"build")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --disable-parallel-make" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -s" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"rename")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_rename}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_rename}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"edit-recipe"|"find-recipe")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_edit_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_edit_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"configure-help")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_configure_help}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_configure_help}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"update-recipe")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_update_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_update_recipe}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"reset")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_reset}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_reset}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"finish")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_finish}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_finish}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"deploy-target")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_deploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_deploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"undeploy-target")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_undeploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_undeploy_target}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"build-image")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --add-packages" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -p" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"create-workspace")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --create-only" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"import")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "--help --overwrite" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "-h -o" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"extract")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_extract}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_extract}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+		"sync")
+            case "$cur" in
+                "--"*)
+                    COMPREPLY=( $(compgen -W "${opts_long_sync}" -- ${cur}) )
+                    return 0
+                ;;
+                "-"*)
+                    COMPREPLY=( $(compgen -W "${opts_short_sync}" -- ${cur}) )
+                    return 0
+                ;;
+				esac
+		;;
+	esac
+
+	if [[ "${COMP_WORDS[0]}" == "devtool" ]] && [[ "${COMP_WORDS[1]}" == "export" ]]; then
+		if [[ "${COMP_WORDS[2]}" =~ --exclude|-e|--import|-i ]]; then
+			_parse_recipes_export
+			if [[ -e $bb_recipes_export ]]; then
+                COMPREPLY=( $(compgen -W "${recipes_export}" -- ${cur}) )
+                return 0
+            fi
+		fi
+	fi
+
+    case "$cur" in
+        "--"*)
+            COMPREPLY=( $(compgen -W "${opts_long_global}" -- ${cur}) )
+            if [[ ${#COMPREPLY[@]} == 1 && ${COMPREPLY[0]} == "--"*"=" ]] ; then
+                compopt -o nospace
+            fi
+            return 0
+        ;;
+        "-"*)
+            COMPREPLY=( $(compgen -W "${opts_short_global}" -- ${cur}) )
+            return 0
+        ;;
+    esac
+
+    if [[ ${prev} == "devtool" ]]; then
+        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
+		return 0
+    elif [[ ! ${subcommands} =~ [[:space:]]${cur}[[:space:]] ]]; then	 
+        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
+		return 0
+    fi
+}
+complete -F _devtool devtool
