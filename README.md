@@ -1,7 +1,7 @@
 # bitbake-completion
 
-Bitbake bash completion scripts compatible with version 1.39.1,
-and with Yocto 2.5 (sumo) release.
+Bitbake bash completion scripts compatible with version 1.40.0,
+and with Yocto 2.6 (Thud) release.
 
 # How to use it ?
 
@@ -43,7 +43,7 @@ following situations:
 2. When running bitbake <TAB> for the first time.
 
 # TODO list:
-- [x] bash bitbake completion latest release 1.39.0 (yocto - sumo 2.5)
+- [x] bash bitbake completion latest release 1.40.0 (yocto - Thud 2.6)
 - [x] create bash completion for other yocto tools (e.g *bitbake-layers*, *bitbake-diffsigs*)
 - [ ] support older branches
 - [ ] support for zsh completion

@@ -1,6 +1,6 @@
 #!bash
 # Bash completion support for bitbake-layers tool,
-# compatible with Bitbake 1.39.1.
+# compatible with Bitbake 1.40.0.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #

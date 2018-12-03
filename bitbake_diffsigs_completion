@@ -1,6 +1,6 @@
 #!bash
 # Bash completion support for bitbake-diffsigs tool,
-# compatible with Bitbake 1.39.1.
+# compatible with Bitbake 1.40.1.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #
@@ -25,11 +25,11 @@ _bitbake_diffsigs()
            distrodata fetch image image_complete install install_ptest_base package \
            package_qa package_write_deb package_write_ipk package_write_rpm package_write_tar \
            packagedata patch populate_lic populate_sdk populate_sysroot prepare_recipe_sysroot \
-           rm_work rm_work_all unpack checkpkg checkuri clean cleanall cleansstate devpyshell \
-           devshell listtasks package_index bootimg bundle_initramfs rootfs testimage \
-           testimage_auto compile_kernelmodules diffconfig kernel_checkout kernel_configcheck \
-           kernel_configme kernel_menuconfig kernel_metadata menuconfig savedefconfig shared_workdir \
-           sizecheck strip validate_branches spdx"
+           rm_work unpack checkpkg checkuri clean cleanall cleansstate devpyshell devshell \
+           listtasks package_index bootimg bundle_initramfs rootfs testimage testimage_auto \
+           compile_kernelmodules diffconfig kernel_checkout kernel_configcheck kernel_configme \
+           kernel_menuconfig kernel_metadata menuconfig savedefconfig shared_workdir sizecheck \
+           strip validate_branches spdx"
 
     colors="auto always never"
 

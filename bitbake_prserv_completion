@@ -1,6 +1,6 @@
 #!bash
 # Bash completion support for bitbake-prserv tool,
-# compatible with Bitbake 1.39.1.
+# compatible with Bitbake 1.40.1.
 #
 # Copyright (C) 2018 Lukasz Gardon <lukasz.gardon@gmail.com>
 #
@@ -9,7 +9,7 @@
 
 _bitbake_prserv()
 {
-    local cur prev opts_short opts_long subcommands file_default log_default log_levels
+    local cur prev opts_short opts_long file_default log_default log_levels
 
     COMPREPLY=()
 
@@ -20,11 +20,6 @@ _bitbake_prserv()
 
     opts_long="--version --help --file= --log= --loglevel= --start \
 	           --stop --host= --port="
-
-    subcommands="layerindex-fetch layerindex-show-depends add-layer \
-	             remove-layer flatten show-layers show-overlayed \
-		         show-recipes show-appends show-cross-depends \
-		         create-layer"
 
     file_default="prserv.sqlite3"
     log_default="prserv.log"
@@ -65,12 +60,5 @@ _bitbake_prserv()
         ;;
     esac
 
-    if [[ ${prev} == "bitbake-layers" ]]; then
-        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
-        return 0
-    elif [[ ! ${subcommands} =~ [[:space:]]${cur}[[:space:]] ]]; then
-        COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
-        return 0
-    fi
 }
 complete -F _bitbake_prserv bitbake-prserv
