@@ -79,9 +79,9 @@ _bitbake()
         ;;
     esac
 
-    bb_layers_conf="conf/bblayers.conf"
-    bb_layers_md5=".bb_layers_conf.md5"
-    bb_recipes=".bb_recipes"
+    bb_layers_conf="$BBPATH/conf/bblayers.conf"
+    bb_layers_md5="$BBPATH/.bb_layers_conf.md5"
+    bb_recipes="$BBPATH/.bb_recipes"
 
     _parse_recipes () {
         bitbake -s | sed -e '0,/^=.*/d' -e '/^\s*$/d' -e '/^Summary:/d' | awk '{print $1}' > $bb_recipes
