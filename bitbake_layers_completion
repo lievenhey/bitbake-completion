@@ -31,7 +31,7 @@ _bitbake_layers()
 		         show-recipes show-appends show-cross-depends \
 		         create-layer"
 
-    colors="auto always never" 
+    colors="auto always never"
 
     opts_long_show_overlayed="--help --filenames --same-version"
     opts_short_show_overlayed="-h -f -s"
@@ -90,6 +90,10 @@ _bitbake_layers()
                 COMPREPLY=( $(compgen -W "${opts_short_add_layer}" -- ${cur}) )
                 return 0
             ;;
+            *)
+            COMPREPLY=( $(compgen -f -- ${cur}) )
+            return 0
+            ;;
         esac
     elif [[ "${COMP_WORDS[1]}" == "show-overlayed" ]]; then
         case "$cur" in
@@ -123,7 +127,7 @@ _bitbake_layers()
                 COMPREPLY=( $(compgen -W "${opts_short_show_cross_depends}" -- ${cur}) )
                 return 0
             ;;
-        esac    
+        esac
     elif [[ "${COMP_WORDS[1]}" == "layerindex-fetch" ]]; then
         case "$cur" in
             "--"*|"")
@@ -134,7 +138,7 @@ _bitbake_layers()
                 COMPREPLY=( $(compgen -W "${opts_short_show_layerindex_fetch}" -- ${cur}) )
                 return 0
             ;;
-        esac    
+        esac
     elif [[ "${COMP_WORDS[1]}" == "layerindex-show-depends" ]]; then
         case "$cur" in
             "--"*|"")
@@ -156,7 +160,7 @@ _bitbake_layers()
                 COMPREPLY=( $(compgen -W "${opts_short_show_create_layer}" -- ${cur}) )
                 return 0
             ;;
-        esac                          
+        esac
     fi
 
     case "$prev" in
